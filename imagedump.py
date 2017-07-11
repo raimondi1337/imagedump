@@ -1,23 +1,32 @@
+import PIL
+from PIL import Image, ImageTk
 import tkinter as tk
 from tkinter import filedialog
 
-class ImageDump(tk.Frame):
-	def __init__(self, parent, *args, **kwargs):
-		tk.Frame.__init__(self, parent, *args, **kwargs)
-		self.parent = parent
-
-		def get_source_directory(self):
-			directory = filedialog.askdirectory()
-			self.source_directory.set(directory)
-
+class ImageDump():
+	# initilize program
+	def __init__(self):
+		# Data
+		self.root = tk.Tk()
 		self.source_directory = tk.StringVar()
-		self.source_directory.set('/')
-		dir_box_label = tk.Label(self,text='Base Directory:').pack(side='left')
-		dir_box = tk.Entry(self, textvariable=self.source_directory).pack(side='left')
-		browse_button = tk.Button(self, text='Browse',command=lambda:get_source_directory(self)).pack(side='left')
+
+		# Build UI
+		self.browseLabel  = tk.Label( self.root,text='Base Directory:').pack(side='left')
+		self.browseEntry  = tk.Entry( self.root, textvariable=self.source_directory).pack(side='left')
+		self.browseButton = tk.Button(self.root, text='Browse', command=self.browse).pack(side='left')
+
+	# get directory from user
+	def browse(self):
+		directory = filedialog.askdirectory()
+		self.source_directory.set(directory)
+
+	# start gui
+	def run(self):
+		self.root.title("ImageDump")
+		self.root.deiconify()
+		self.root.mainloop()
 
 
 if __name__ == "__main__":
-	root = tk.Tk()
-	ImageDump(root).pack(side="top", fill="both", expand=True)
-	root.mainloop()
+	i = ImageDump()
+	i.run()
