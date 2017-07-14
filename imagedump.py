@@ -10,6 +10,9 @@ class ImageDump():
 
 		# Data
 		self.root = tk.Tk()
+		x = self.root.winfo_screenwidth()
+		y =	self.root.winfo_screenheight()
+		self.root.geometry('{}x{}+{}+{}'.format(int(x/2),int(y/2),int(x/4),int(y/4)))
 		self.source_directory = tk.StringVar()
 
 		# Build image canvas
