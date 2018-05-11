@@ -1,7 +1,6 @@
-import PIL
 from PIL import Image, ImageTk
 import tkinter as tk
-from tkinter import filedialog
+from pprint import pprint
 
 class ImageDump():
 
@@ -14,39 +13,73 @@ class ImageDump():
 		y =	self.root.winfo_screenheight()
 		self.root.geometry('{}x{}+{}+{}'.format(int(x/2),int(y/2),int(x/4),int(y/4)))
 		self.source_directory = tk.StringVar()
+		self.imageIndex = 0
+
+		# Placeholder list of images
+		self.images = []
+		self.images.append(Image.open('cat1.jpeg').convert("RGB"))
+		self.images.append(Image.open('cat2.jpeg').convert("RGB"))
+		self.images.append(Image.open('cat3.jpeg').convert("RGB"))
+
+		# Build listbox
+		self.listbox = tk.Listbox(self.root)
+		self.listbox.pack(fill="y", side='left')
+
+		# remove click listeners from listbox to prevent user clicking for now
+		self.listbox.bindtags((self.listbox, self.root, 'all'))
+
+		for item in self.images:
+			self.listbox.insert('end', item)
 
 		# Build image canvas
 		self.canvas = tk.Canvas(self.root,bg='grey',highlightthickness=0)
-		self.original = Image.open('Drawing.png').convert("RGB")
-		self.image = ImageTk.PhotoImage(self.original)
-		self.canvas.create_image(0,0,image=self.image,anchor='nw',tags="IMG")
+		self.currentImage = ImageTk.PhotoImage(self.images[self.imageIndex])
+
+		w,h = self.canvas.winfo_width(),self.canvas.winfo_height()
+		iw,ih = self.images[self.imageIndex].size
+
+		self.canvasImage = self.canvas.create_image(w/2-iw/2,h/2-ih/2,image=self.currentImage,anchor='nw',tags="IMG")
 		self.canvas.pack(fill="both", expand=True)
 		self.canvas.bind('<Configure>', self.resize)
 
 		# Build directory picker
-		self.browseLabel  = tk.Label( self.root,text='Base Directory:').pack(side='left')
-		self.browseEntry  = tk.Entry( self.root, textvariable=self.source_directory).pack(side='left',fill='x',expand=True)
-		self.browseButton = tk.Button(self.root, text='Browse', command=self.browse).pack(side='left')
+		self.nextButton = tk.Button(self.root, text='Next', command=self.next).pack(side='bottom')
 
 	# scale images to fit canvas
 	def resize(self,event):
 
 		# maths to find proper image size while maintaining aspect ratio
 		w,h = event.width,event.height
-		ow,oh = self.original.size
-		ratio = min((w/ow),(h/oh))
-		fitSize = (int(ow*ratio),int(oh*ratio))
+		iw,ih = self.images[self.imageIndex].size
+		ratio = min((w/iw),(h/ih))
+		fitSize = (int(iw*ratio),int(ih*ratio))
 
 		# remove and replace resized image
-		self.image = self.original.resize(fitSize,Image.BILINEAR)
-		self.image = ImageTk.PhotoImage(self.image)
-		self.canvas.delete("IMG")
-		self.canvas.create_image(w/2,h/2,image=self.image,tags="IMG")
+		if (iw > w or ih > h):
+			image = self.images[self.imageIndex].resize(fitSize,Image.BILINEAR)
+		else:
+			image = self.images[self.imageIndex]
 
-	# get directory from user
-	def browse(self):
-		directory = filedialog.askdirectory()
-		self.source_directory.set(directory)
+		# replace image
+		self.currentImage = ImageTk.PhotoImage(image)
+		self.canvas.delete(self.canvasImage)
+		self.canvas.create_image(w/2,h/2,image=self.currentImage,tags="IMG")
+
+	# switch to next image
+	def next(self):
+		# update current image
+		self.imageIndex = self.imageIndex + 1 if self.imageIndex + 1 < len(self.images) else 0
+		self.currentImage = ImageTk.PhotoImage(self.images[self.imageIndex])
+
+		# handle listbox selection
+		self.listbox.selection_clear(0,'end')
+		self.listbox.selection_set(self.imageIndex)
+		self.listbox.activate(self.imageIndex)
+
+		# replace image
+		w,h = self.canvas.winfo_width(),self.canvas.winfo_height()
+		iw,ih = self.images[self.imageIndex].size
+		self.canvasImage = self.canvas.create_image(w/2-iw/2,h/2-ih/2,image=self.currentImage,anchor='nw',tags="IMG")
 
 	# start gui
 	def run(self):
@@ -54,7 +87,7 @@ class ImageDump():
 		self.root.deiconify()
 		self.root.mainloop()
 
-
+# that thing you do in python
 if __name__ == "__main__":
 	i = ImageDump()
 	i.run()
