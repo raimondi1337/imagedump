@@ -1,6 +1,9 @@
 from PIL import Image, ImageTk
-import tkinter as tk
+from os import listdir, path
 from pprint import pprint
+import tkinter as tk
+
+VALID_EXTENSIONS = ['.jpg','.jpeg','.png','.gif']
 
 class ImageDump():
 
@@ -15,29 +18,33 @@ class ImageDump():
 		self.source_directory = tk.StringVar()
 		self.imageIndex = 0
 
-		# Placeholder list of images
+		# build image list
 		self.images = []
-		self.images.append(Image.open('cat1.jpeg').convert("RGB"))
-		self.images.append(Image.open('cat2.jpeg').convert("RGB"))
-		self.images.append(Image.open('cat3.jpeg').convert("RGB"))
+		for file in listdir():
+			if path.splitext(file)[1] in VALID_EXTENSIONS:
+				image_object = {
+					'filename': file,
+					'image': Image.open(file).convert('RGB')
+				}
+				self.images.append(image_object)
 
 		# Build listbox
 		self.listbox = tk.Listbox(self.root)
 		self.listbox.pack(fill="y", side='left')
+		for image_object in self.images:
+			self.listbox.insert('end', image_object['filename'])
 
 		# remove click listeners from listbox to prevent user clicking for now
 		self.listbox.bindtags((self.listbox, self.root, 'all'))
 
-		for item in self.images:
-			self.listbox.insert('end', item)
-
 		# Build image canvas
 		self.canvas = tk.Canvas(self.root,bg='grey',highlightthickness=0)
-		self.currentImage = ImageTk.PhotoImage(self.images[self.imageIndex])
+		self.currentImage = ImageTk.PhotoImage(self.images[self.imageIndex]['image'])
 
 		w,h = self.canvas.winfo_width(),self.canvas.winfo_height()
-		iw,ih = self.images[self.imageIndex].size
+		iw,ih = self.images[self.imageIndex]['image'].size
 
+		#place canvas
 		self.canvasImage = self.canvas.create_image(w/2-iw/2,h/2-ih/2,image=self.currentImage,anchor='nw',tags="IMG")
 		self.canvas.pack(fill="both", expand=True)
 		self.canvas.bind('<Configure>', self.resize)
@@ -50,15 +57,15 @@ class ImageDump():
 
 		# maths to find proper image size while maintaining aspect ratio
 		w,h = event.width,event.height
-		iw,ih = self.images[self.imageIndex].size
+		iw,ih = self.images[self.imageIndex]['image'].size
 		ratio = min((w/iw),(h/ih))
 		fitSize = (int(iw*ratio),int(ih*ratio))
 
 		# remove and replace resized image
 		if (iw > w or ih > h):
-			image = self.images[self.imageIndex].resize(fitSize,Image.BILINEAR)
+			image = self.images[self.imageIndex]['image'].resize(fitSize,Image.BILINEAR)
 		else:
-			image = self.images[self.imageIndex]
+			image = self.images[self.imageIndex]['image']
 
 		# replace image
 		self.currentImage = ImageTk.PhotoImage(image)
@@ -69,7 +76,7 @@ class ImageDump():
 	def next(self):
 		# update current image
 		self.imageIndex = self.imageIndex + 1 if self.imageIndex + 1 < len(self.images) else 0
-		self.currentImage = ImageTk.PhotoImage(self.images[self.imageIndex])
+		self.currentImage = ImageTk.PhotoImage(self.images[self.imageIndex]['image'])
 
 		# handle listbox selection
 		self.listbox.selection_clear(0,'end')
@@ -78,7 +85,7 @@ class ImageDump():
 
 		# replace image
 		w,h = self.canvas.winfo_width(),self.canvas.winfo_height()
-		iw,ih = self.images[self.imageIndex].size
+		iw,ih = self.images[self.imageIndex]['image'].size
 		self.canvasImage = self.canvas.create_image(w/2-iw/2,h/2-ih/2,image=self.currentImage,anchor='nw',tags="IMG")
 
 	# start gui
